@@ -68,10 +68,14 @@
     
   - name: (UPDATE) Replace old executables and hamcore.se2 files with new ones
     copy:
-      src: /tmp/vpnserver
+      src: /tmp/vpnserver/'{{ item }}' 
       dest: /usr/local/vpnserver
       force: yes
       remote_src: yes
+    with_items:
+    - vpnserver
+    - vpncmd
+    - hamcore.se2
     when: file_details.stat.exists == True
     
   - name: (NEW INSTALL) Copy server files to /usr/local/vpnserver
@@ -81,4 +85,19 @@
       remote_src: yes
     when: file_details.stat.exists == False
     
+  - name: Set general permissions
+    file:
+      path: /usr/local/vpnserver
+      owner: root
+      group: ansible
+      mode: '600'
     
+  - name: Set executable permissions
+    file:
+      path: /usr/local/vpnserver/'{{ item }}'
+      owner: root
+      group: ansible
+      mode: '700'
+    with_items:
+    - vpnserver
+    - vpncmd
