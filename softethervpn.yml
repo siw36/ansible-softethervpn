@@ -1,0 +1,84 @@
+---
+- name: "Deploy or update a Softether VPN server"
+  hosts: softethervpn
+  remote_user: ansible
+  become: yes
+  become_method: sudo
+  
+  vars_prompt:
+  - name: "link"
+    prompt: "Download link to Softether VPN server files"
+    default: "https://github.com/SoftEtherVPN/SoftEtherVPN_Stable/releases/download/v4.28-9669-beta/softether-vpnserver-v4.28-9669-beta-2018.09.11-linux-x64-64bit.tar.gz"
+  private: no
+
+  tasks:
+  - name: Update the host OS
+    yum:
+      name: '*'
+      state: latest
+    
+  - name: Install dependencies
+    yum:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+    packages:
+    - make
+    - gcc
+    - zlib-devel
+    - openssl-devel
+    - readline-devel
+    - ncurses-devel
+    - curl
+    - gzip
+    - tar
+    
+  - name: Check if this play should update an existing server or install for the first time
+    stat:
+      path: /usr/local/vpnserver
+    register: file_details
+  - debug:
+      msg: "/usr/local/vpnserver exists - update will be performed"
+    when: file_details.stat.exists == True
+  - debug:
+      msg: "/usr/local/vpnserver does not exist - new install will be performed"
+    when: file_details.stat.exists == False
+    
+  - name: Stop the service
+    systemd:
+      name: vpnserver
+      state: stopped
+    when: file_details.stat.exists == True
+ 
+  - name: Download Softether VPN server files
+    unarchive:
+      src: '{{ link }}'
+      dest: /tmp/vpnserver
+      remote_src: yes
+      owner: root
+      group: ansible
+      mode: '600'
+      
+  - name: Compile the executables and accept license
+    expect:
+      command: make
+      chdir: /tmp/vpnserver
+      responses:
+        (?i)Please choose one of above number: "1"   
+    
+  - name: (UPDATE) Replace old executables and hamcore.se2 files with new ones
+    copy:
+      src: /tmp/vpnserver
+      dest: /usr/local/vpnserver
+      force: yes
+      remote_src: yes
+    when: file_details.stat.exists == True
+    
+  - name: (NEW INSTALL) Copy server files to /usr/local/vpnserver
+    copy:
+      src: /tmp/vpnserver
+      dest: /usr/local/vpnserver
+      remote_src: yes
+    when: file_details.stat.exists == False
+    
+    
