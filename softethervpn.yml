@@ -125,6 +125,24 @@
     - vpncmd
     become: yes
 
+  - name: "Opening default Softether VPN ports"
+    firewalld:
+      port: "{{item}}"
+      permanent: yes
+      state: enabled
+    with_items:
+    - '1194/tcp'
+    - '5555/tcp'
+    - '1194/udp'
+    - '500/udp'
+    - '1701/udp'
+    - '4500/udp'
+    - '992/tcp'
+    - '443/tcp'
+
+  - name: "Reload firewall"
+    command: firewall-cmd --reload
+
   - name: "Copy systemd script"
     copy:
       src: systemd/vpnserver
