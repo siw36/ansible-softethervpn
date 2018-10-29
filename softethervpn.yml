@@ -45,7 +45,7 @@
     when: file_details.stat.exists == False
     
   - name: Stop the service
-    systemd:
+    service:
       name: vpnserver
       state: stopped
     when: file_details.stat.exists == True
@@ -68,7 +68,7 @@
     
   - name: (UPDATE) Replace old executables and hamcore.se2 files with new ones
     copy:
-      src: /tmp/vpnserver/'{{ item }}' 
+      src: /tmp/vpnserver/'{{ item }}'
       dest: /usr/local/vpnserver
       force: yes
       remote_src: yes
@@ -101,3 +101,15 @@
     with_items:
     - vpnserver
     - vpncmd
+
+  - name: Copy systemd script
+    copy:
+      src: systemd/vpnserver
+      dest: /etc/init.d/vpnserver
+      mode: '755'
+
+  - name: Enable vpnserver service
+    service:
+      name: vpnserver
+      enabled: yes
+      state: started
