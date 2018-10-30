@@ -161,3 +161,11 @@
     systemd:
       name: vpnserver
       enabled: yes
+
+  - debug:
+      msg:
+      - "The installation/update of Softether VPN server is now complete"
+      - "Use the 'Server Manager' from Softether to configure your server:"
+      - "https://www.softether.org/4-docs/1-manual/2._SoftEther_VPN_Essential_Architecture/2.4_VPN_Server_Manager"
+      - "Connection details:"
+      - "{{ ansible_all_ipv4_addresses }}"
